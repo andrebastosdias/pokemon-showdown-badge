@@ -64,7 +64,7 @@ jobs:
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
           PR=${{ steps.open_prs.outputs.open_prs }}
           TS=${{ steps.lastcommit_ts.outputs.ts }}
-          M=${{ steps.lastcommit_msg.outputs.msg }}
+          M="${{ steps.lastcommit_msg.outputs.msg }}"
 
           REL_TIME=$(curl -s "https://img.shields.io/date/${TS}.json" | jq -r '.value')
           COMBINED="${REL_TIME} | ${M}"
