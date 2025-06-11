@@ -1,4 +1,4 @@
-name: Generate Contribution Badges
+name: generate-contribution-badges
 
 on:
   push:
