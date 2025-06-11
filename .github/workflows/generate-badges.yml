@@ -24,10 +24,9 @@ jobs:
       - name: Extract commit count and rank
         id: commit_and_rank
         run: |
-          RAW_COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
-          RAW_POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
-          COMMITS=$(( RAW_COMMITS ))
-          POS=$(( RAW_POS + 1 ))
+          COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
+          POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
+          RANK=$(( POS + 1 ))
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
           echo "rank=$RANK" >> $GITHUB_OUTPUT
 
@@ -50,10 +49,8 @@ jobs:
         run: |
           mkdir -p docs
           C=${{ steps.commit_and_rank.outputs.commits }}
-          echo $C
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
-          echo $R_ESC
-          # TS=${{ steps.lastcommit_ts.outputs.ts }}
+          TS=${{ steps.lastcommit_ts.outputs.ts }}
           # M=${{ steps.lastcommit_msg.outputs.msg }}
           # M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${M}")
 
@@ -64,8 +61,8 @@ jobs:
           curl -s "https://img.shields.io/static/v1?label=contributor&message=${R_ESC}&color=8334B7&style=flat" \
             > docs/contributor.svg
           # Days since last commit
-          # curl -s "https://img.shields.io/date/${TS}.svg?label=time%20since&color=00A398&style=flat" \
-          #   > docs/time-since.svg
+          curl -s "https://img.shields.io/date/${TS}.svg?label=last%20commit&color=00A398&style=flat" \
+            > docs/last-commit.svg
           # Last commit message
           # curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
           #   > docs/last-commit.svg
