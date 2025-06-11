@@ -51,9 +51,9 @@ jobs:
           mkdir -p docs
           C=${{ steps.commit_and_rank.outputs.commits }}
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
-          TS=${{ steps.lastcommit_ts.outputs.ts }}
-          M=${{ steps.lastcommit_msg.outputs.msg }}
-          M_ESC=$(python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "${M}")
+          # TS=${{ steps.lastcommit_ts.outputs.ts }}
+          # M=${{ steps.lastcommit_msg.outputs.msg }}
+          # M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${M}")
 
           # Commits
           curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
@@ -62,11 +62,11 @@ jobs:
           curl -s "https://img.shields.io/static/v1?label=contributor&message=${R_ESC}&color=8334B7&style=flat" \
             > docs/contributor.svg
           # Days since last commit
-          curl -s "https://img.shields.io/date/${TS}.svg?label=time%20since&color=00A398&style=flat" \
-            > docs/time-since.svg
+          # curl -s "https://img.shields.io/date/${TS}.svg?label=time%20since&color=00A398&style=flat" \
+          #   > docs/time-since.svg
           # Last commit message
-          curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
-            > docs/last-commit.svg
+          # curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
+          #   > docs/last-commit.svg
 
       - name: Add .nojekyll
         run: touch docs/.nojekyll
