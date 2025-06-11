@@ -52,8 +52,9 @@ jobs:
       - name: Fetch my last commit message
         id: lastcommit_msg
         run: |
-          MSG=$(curl -s "https://api.github.com/repos/smogon/pokemon-showdown/commits?author=$USER&per_page=1" \
+          RAW_MSG=$(curl -s "https://api.github.com/repos/smogon/pokemon-showdown/commits?author=$USER&per_page=1" \
             | jq -r '.[0].commit.message' | head -n1 | sed 's/"/\\"/g')
+          MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
       - name: Generate badge SVGs
@@ -63,8 +64,11 @@ jobs:
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
           PR=${{ steps.open_prs.outputs.open_prs }}
           TS=${{ steps.lastcommit_ts.outputs.ts }}
-          # M=${{ steps.lastcommit_msg.outputs.msg }}
-          # M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${M}")
+          M=${{ steps.lastcommit_msg.outputs.msg }}
+
+          REL_TIME=$(curl -s "https://img.shields.io/date/${TS}.json" | jq -r '.value')
+          COMBINED="${REL_TIME} | ${M}"
+          COMBINED_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$COMBINED")
 
           curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
             > docs/commits.svg
@@ -72,10 +76,8 @@ jobs:
             > docs/contributor.svg
           curl -s "https://img.shields.io/static/v1?label=open%20pull%20requests&message=${PR}&color=00A398&style=flat" \
             > docs/open-pull-requests.svg
-          curl -s "https://img.shields.io/date/${TS}.svg?label=last%20commit&color=004878&style=flat" \
+          curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${COMBINED_ESC}&color=004878&style=flat" \
             > docs/last-commit.svg
-          # curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
-          #   > docs/last-commit.svg
 
       - name: Add .nojekyll
         run: touch docs/.nojekyll
