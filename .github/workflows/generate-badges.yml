@@ -45,6 +45,13 @@ jobs:
             | jq -r '.[0].commit.message' | head -n1 | sed 's/"/\\"/g')
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
+      - name: Fetch number of open non-draft PRs by me
+        id: open_prs
+        run: |
+          OPEN_PRS=$(curl -s "https://api.github.com/search/issues?q=repo:smogon/pokemon-showdown+is:pr+is:open+draft:false+author:${USER}" \
+            | jq '.total_count')
+          echo "open_prs=$OPEN_PRS" >> $GITHUB_OUTPUT
+
       - name: Generate badge SVGs
         run: |
           mkdir -p docs
@@ -53,6 +60,7 @@ jobs:
           TS=${{ steps.lastcommit_ts.outputs.ts }}
           # M=${{ steps.lastcommit_msg.outputs.msg }}
           # M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${M}")
+          PR=${{ steps.open_prs.outputs.open_prs }}
 
           # Commits
           curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
@@ -63,6 +71,8 @@ jobs:
           # Days since last commit
           curl -s "https://img.shields.io/date/${TS}.svg?label=last%20commit&color=00A398&style=flat" \
             > docs/last-commit.svg
+          curl -s "https://img.shields.io/static/v1?label=open%20pull%20requests&message=${PR}&color=004878&style=flat" \
+            > docs/open-pull-requests.svg
           # Last commit message
           # curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
           #   > docs/last-commit.svg
