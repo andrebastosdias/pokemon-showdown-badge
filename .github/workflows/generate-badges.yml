@@ -51,6 +51,7 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
+          DATE=$(date +"%d %b %Y")
           git add badges/
-          git commit -m "Update badges" || echo "No changes to commit"
+          git commit -m "Update badges - $DATE" || echo "No changes to commit"
           git push
