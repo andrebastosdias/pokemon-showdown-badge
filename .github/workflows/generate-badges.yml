@@ -7,6 +7,9 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+env:
+  USER: andrebastosdias
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -16,31 +19,56 @@ jobs:
 
       - name: Fetch contributor data
         run: |
-          curl -s https://api.github.com/repos/smogon/pokemon-showdown/contributors?per_page=100 > contributors.json
+          curl -s https://api.github.com/repos/smogon/pokemon-showdown/contributors?per_page=100 \
+            > contributors.json
 
-      - name: Extract commit count and rank (with +1)
+      - name: Extract commit count and rank (+1 for rank)
         id: extract
         run: |
-          USER="andrebastosdias"
-          # get raw values
           RAW_COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
-          RAW_POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
+          RAW_POS=$(jq -r ".[] | .login" contributors.json \
+            | grep -n "^$USER$" | cut -d: -f1)
+          COMMITS=${RAW_COMMITS:-0}
+          RANK=$(( RAW_POS + 1 ))
+          echo "commits=$COMMITS"      >> $GITHUB_OUTPUT
+          echo "rank=$RANK"            >> $GITHUB_OUTPUT
 
-          COMMITS=$(( RAW_COMMITS ))
-          POS=$(( RAW_POS + 1 ))
+      - name: Fetch my last commit timestamp
+        id: lastcommit_ts
+        run: |
+          TIMESTAMP=$(curl -s "https://api.github.com/repos/smogon/pokemon-showdown/commits?author=$USER&per_page=1" \
+            | jq -r '.[0].commit.committer.date')
+          UNIX_TS=$(date -d "$TIMESTAMP" +%s)
+          echo "ts=$UNIX_TS" >> $GITHUB_OUTPUT
 
-          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
-          echo "rank=$POS" >> $GITHUB_OUTPUT
+      - name: Fetch my last commit message
+        id: lastcommit_msg
+        run: |
+          MSG=$(curl -s "https://api.github.com/repos/smogon/pokemon-showdown/commits?author=$USER&per_page=1" \
+            | jq -r '.[0].commit.message' | head -n1 | sed 's/"/\\"/g')
+          echo "msg=$MSG" >> $GITHUB_OUTPUT
 
-      - name: Generate Shields.io-style badge SVGs
+      - name: Generate badge SVGs
         run: |
           mkdir -p docs
-          COMMITS=${{ steps.extract.outputs.commits }}
-          RANK_ESCAPED=$(printf '%s' "${{ steps.extract.outputs.rank }}" | sed 's/^/%23/')
-          curl -s "https://img.shields.io/static/v1?label=commits&message=${COMMITS}&color=F34134" \
+          C=${{ steps.extract.outputs.commits }}
+          R_ESC=$(printf '%s' "${{ steps.extract.outputs.rank }}" | sed 's/^/%23/')
+          TS=${{ steps.lastcommit_ts.outputs.ts }}
+          M=${{ steps.lastcommit_msg.outputs.msg }}
+          M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$M")
+
+          # Commits
+          curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
             > docs/commits.svg
-          curl -s "https://img.shields.io/static/v1?label=contributor&message=${RANK_ESCAPED}&color=8334B7" \
+          # Contributor rank
+          curl -s "https://img.shields.io/static/v1?label=contributor&message=${R_ESC}&color=8334B7&style=flat" \
             > docs/contributor.svg
+          # Days since last commit
+          curl -s "https://img.shields.io/date/${TS}.svg?label=time%20since&color=00A398&style=flat" \
+            > docs/time-since.svg
+          # Last commit message
+          curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${M_ESC}&color=004878&style=flat" \
+            > docs/last-commit.svg
 
       - name: Add .nojekyll
         run: touch docs/.nojekyll
@@ -49,7 +77,11 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          DATE=$(date +"%d %b %Y")
           git add docs/
-          git commit -m "Update badges - $DATE" || echo "No changes"
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            DATE=$(date +"%d %b %Y")
+            git commit -m "Update badges - $DATE"
+          else
+            git commit -m "Update badges"
+          fi
           git push
