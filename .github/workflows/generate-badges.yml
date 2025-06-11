@@ -1,11 +1,8 @@
-# .github/workflows/generate-badges.yml
 name: Generate Contribution Badges
 
 on:
-  push:
-    branches: [ master ]
   schedule:
-    - cron: "0 0 * * *"   # Every day at midnight UTC
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -19,39 +16,35 @@ jobs:
         run: |
           curl -s https://api.github.com/repos/smogon/pokemon-showdown/contributors?per_page=100 > contributors.json
 
-      - name: Extract commit count and rank
+      - name: Extract commit count and rank (with +1)
         id: extract
         run: |
           USER="andrebastosdias"
-          COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
-          RANK=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
+          # get raw values
+          RAW_COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
+          RAW_POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
 
-          echo "commits=${COMMITS:-0}" >> $GITHUB_OUTPUT
-          echo "rank=${RANK:-N/A}" >> $GITHUB_OUTPUT
+          # add 1 to each (default to zero if missing)
+          COMMITS=$(( RAW_COMMITS + 1 ))
+          POS=$(( RAW_POS + 1 ))
 
-      - name: Create badge files (SVG)
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "rank=$POS" >> $GITHUB_OUTPUT
+
+      - name: Create static shields.io badge URLs
         run: |
-          mkdir -p badges
+          mkdir -p docs
+          echo "https://img.shields.io/badge/commits-$(( ${{ steps.extract.outputs.commits }} ))-blue" > docs/commits.txt
+          echo "https://img.shields.io/badge/contributor-$(( ${{ steps.extract.outputs.rank }} ))-blue" > docs/contributor.txt
 
-          echo "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='20'>
-            <rect width='200' height='20' fill='#007ec6'/>
-            <text x='10' y='14' fill='white' font-family='Arial' font-size='12'>
-              Commits: ${{ steps.extract.outputs.commits }}
-            </text>
-          </svg>" > badges/commits.svg
-
-          echo "<svg xmlns='http://www.w3.org/2000/svg' width='250' height='20'>
-            <rect width='250' height='20' fill='#4c1'/>
-            <text x='10' y='14' fill='white' font-family='Arial' font-size='12'>
-              Contributor Rank: #${{ steps.extract.outputs.rank }}
-            </text>
-          </svg>" > badges/rank.svg
+      - name: Add .nojekyll
+        run: touch docs/.nojekyll
 
       - name: Commit and push badges
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
           DATE=$(date +"%d %b %Y")
-          git add badges/
-          git commit -m "Update badges - $DATE" || echo "No changes to commit"
+          git add docs/commits.txt docs/contributor.txt docs/.nojekyll
+          git commit -m "Update badges - $DATE" || echo "No changes"
           git push
