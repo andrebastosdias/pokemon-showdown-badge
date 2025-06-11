@@ -19,19 +19,17 @@ jobs:
 
       - name: Fetch contributor data
         run: |
-          curl -s https://api.github.com/repos/smogon/pokemon-showdown/contributors?per_page=100 \
-            > contributors.json
+          curl -s https://api.github.com/repos/smogon/pokemon-showdown/contributors?per_page=100 > contributors.json
 
-      - name: Extract commit count and rank (+1 for rank)
-        id: extract
+      - name: Extract commit count and rank
+        id: commit_and_rank
         run: |
           RAW_COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
-          RAW_POS=$(jq -r ".[] | .login" contributors.json \
-            | grep -n "^$USER$" | cut -d: -f1)
-          COMMITS=${RAW_COMMITS:-0}
-          RANK=$(( RAW_POS + 1 ))
-          echo "commits=$COMMITS"      >> $GITHUB_OUTPUT
-          echo "rank=$RANK"            >> $GITHUB_OUTPUT
+          RAW_POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
+          COMMITS=$(( RAW_COMMITS ))
+          POS=$(( RAW_POS + 1 ))
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "rank=$RANK" >> $GITHUB_OUTPUT
 
       - name: Fetch my last commit timestamp
         id: lastcommit_ts
@@ -51,8 +49,8 @@ jobs:
       - name: Generate badge SVGs
         run: |
           mkdir -p docs
-          C=${{ steps.extract.outputs.commits }}
-          R_ESC=$(printf '%s' "${{ steps.extract.outputs.rank }}" | sed 's/^/%23/')
+          C=${{ steps.commit_and_rank.outputs.commits }}
+          R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
           TS=${{ steps.lastcommit_ts.outputs.ts }}
           M=${{ steps.lastcommit_msg.outputs.msg }}
           M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$M")
