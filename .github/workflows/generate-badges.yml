@@ -26,8 +26,7 @@ jobs:
           RAW_COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
           RAW_POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
 
-          # add 1 to each (default to zero if missing)
-          COMMITS=$(( RAW_COMMITS + 1 ))
+          COMMITS=$(( RAW_COMMITS ))
           POS=$(( RAW_POS + 1 ))
 
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
@@ -40,7 +39,7 @@ jobs:
           RANK_ESCAPED=$(printf '%s' "${{ steps.extract.outputs.rank }}" | sed 's/^/%23/')
           curl -s "https://img.shields.io/static/v1?label=commits&message=${COMMITS}&color=F34134" \
             > docs/commits.svg
-          curl -s "https://img.shields.io/static/v1?label=contributor&message=%23${RANK_ESCAPED}&color=8334B7" \
+          curl -s "https://img.shields.io/static/v1?label=contributor&message=${RANK_ESCAPED}&color=8334B7" \
             > docs/contributor.svg
 
       - name: Add .nojekyll
