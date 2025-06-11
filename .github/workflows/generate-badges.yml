@@ -91,8 +91,8 @@ jobs:
           git add docs/
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             DATE=$(date +"%d %b %Y")
-            git commit -m "Update badges - $DATE"
+            git commit -m "Update badges - $DATE" || echo "No changes to commit"
           else
-            git commit -m "Update badges"
+            git commit -m "Update badges" || echo "No changes to commit"
           fi
           git push
