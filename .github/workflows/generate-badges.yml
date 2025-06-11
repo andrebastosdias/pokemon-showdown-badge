@@ -33,11 +33,15 @@ jobs:
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
           echo "rank=$POS" >> $GITHUB_OUTPUT
 
-      - name: Create static shields.io badge URLs
+      - name: Generate Shields.io-style badge SVGs
         run: |
           mkdir -p docs
-          echo "https://img.shields.io/badge/commits-$(( ${{ steps.extract.outputs.commits }} ))-blue" > docs/commits.txt
-          echo "https://img.shields.io/badge/contributor-$(( ${{ steps.extract.outputs.rank }} ))-blue" > docs/contributor.txt
+          COMMITS=${{ steps.extract.outputs.commits }}
+          RANK_ESCAPED=$(printf '%s' "${{ steps.extract.outputs.rank }}" | sed 's/^/%23/')
+          curl -s "https://img.shields.io/static/v1?label=commits&message=${COMMITS}&color=F34134&style=flat" \
+            > docs/commits.svg
+          curl -s "https://img.shields.io/static/v1?label=contributor&message=${RANK_ESCAPED}&color=8334B7&style=flat" \
+            > docs/contributor.svg
 
       - name: Add .nojekyll
         run: touch docs/.nojekyll
