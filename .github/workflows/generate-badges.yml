@@ -50,7 +50,9 @@ jobs:
         run: |
           mkdir -p docs
           C=${{ steps.commit_and_rank.outputs.commits }}
+          echo $C
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
+          echo $R_ESC
           # TS=${{ steps.lastcommit_ts.outputs.ts }}
           # M=${{ steps.lastcommit_msg.outputs.msg }}
           # M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${M}")
