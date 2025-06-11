@@ -53,7 +53,7 @@ jobs:
           R_ESC=$(printf '%s' "${{ steps.commit_and_rank.outputs.rank }}" | sed 's/^/%23/')
           TS=${{ steps.lastcommit_ts.outputs.ts }}
           M=${{ steps.lastcommit_msg.outputs.msg }}
-          M_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$M")
+          M_ESC=$(python3 -c 'import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))' "${M}")
 
           # Commits
           curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
