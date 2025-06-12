@@ -2,7 +2,7 @@ name: generate-contribution-badges
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   schedule:
     - cron: '0 * * * *' # Runs every hour
   workflow_dispatch:
