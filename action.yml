@@ -28,6 +28,5 @@ runs:
         USER: ${{ inputs.user }}
         REPO: ${{ inputs.repository }}
         COLORS: ${{ inputs.colors }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         scripts/generate.sh

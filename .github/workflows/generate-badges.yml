@@ -17,6 +17,7 @@ jobs:
     env:
       USER: andrebastosdias
       REPO: smogon/pokemon-showdown
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
