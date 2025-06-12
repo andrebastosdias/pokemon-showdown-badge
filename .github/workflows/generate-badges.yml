@@ -29,8 +29,7 @@ jobs:
         id: commit_and_rank
         run: |
           COMMITS=$(jq ".[] | select(.login == \"$USER\") | .contributions" contributors.json)
-          POS=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
-          RANK=$(( POS + 1 ))
+          RANK=$(jq -r ".[] | .login" contributors.json | grep -n "^$USER$" | cut -d: -f1)
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
           echo "rank=$RANK" >> $GITHUB_OUTPUT
 
