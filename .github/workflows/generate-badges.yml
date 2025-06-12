@@ -56,6 +56,27 @@ jobs:
           MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
           echo "msg=$MSG" >> $GITHUB_OUTPUT
 
+      - name: Assert numeric outputs
+        run: |
+          is_number() {
+            echo "$1" | grep -Eq '^[0-9]+$'
+          }
+
+          C=${{ steps.commit_and_rank.outputs.commits }}
+          R=${{ steps.commit_and_rank.outputs.rank }}
+          PR=${{ steps.open_prs.outputs.open_prs }}
+          TS=${{ steps.lastcommit_ts.outputs.ts }}
+
+          for var_name in C R PR TS; do
+            val=${!var_name}
+            if ! is_number "$val"; then
+              echo "❌ Error: $var_name is not a valid number ('$val')"
+              exit 1
+            fi
+          done
+
+          echo "✅ All values are valid numbers."
+
       - name: Generate badge SVGs
         run: |
           mkdir -p docs
