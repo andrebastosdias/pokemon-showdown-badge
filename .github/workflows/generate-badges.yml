@@ -69,10 +69,10 @@ jobs:
           COMBINED="${REL_TIME} | ${M}"
           COMBINED_ESC=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$COMBINED")
 
-          curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=F34134&style=flat" \
-            > docs/commits.svg
-          curl -s "https://img.shields.io/static/v1?label=contributor&message=${R_ESC}&color=8334B7&style=flat" \
+          curl -s "https://img.shields.io/static/v1?label=contributor&message=${R_ESC}&color=F34134&style=flat" \
             > docs/contributor.svg
+          curl -s "https://img.shields.io/static/v1?label=commits&message=${C}&color=8334B7&style=flat" \
+            > docs/commits.svg
           curl -s "https://img.shields.io/static/v1?label=open%20pull%20requests&message=${PR}&color=00A398&style=flat" \
             > docs/open-pull-requests.svg
           curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${COMBINED_ESC}&color=004878&style=flat" \
