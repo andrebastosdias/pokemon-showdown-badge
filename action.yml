@@ -1,0 +1,33 @@
+name: 'Generate Contribution Badges'
+description: 'Fetch commit count, PR count, last commit, and generate customizable shields badges.'
+author: 'André Bastos Dias'
+branding:
+  icon: 'trophy'
+  color: 'blue'
+inputs:
+  user:
+    description: 'GitHub username to generate badges for'
+    required: true
+  repository:
+    description: 'Owner/repo to query (default is current repo)'
+    required: false
+    default: '${{ github.repository }}'
+  colors:
+    description: 'Comma-separated colors for badges: contributor,commits,open_prs,last_commit'
+    required: false
+    default: 'F34134,8334B7,00A398,004878'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run badge generator
+      shell: bash
+      env:
+        USER: ${{ inputs.user }}
+        REPO: ${{ inputs.repository }}
+        COLORS: ${{ inputs.colors }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        scripts/generate.sh
