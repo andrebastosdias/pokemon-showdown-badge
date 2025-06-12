@@ -51,7 +51,7 @@ git config --global user.name "GitHub Action"
 git add docs/
 
 if [[ "${GITHUB_EVENT_NAME}" == "schedule" ]]; then
-  git commit -m "Update badges ($(date +'%Y-%m-%d %H:%M'))" || echo "No changes"
+  git commit -m "Update badges ($(date +'%Y-%m-%d %H:00'))" || echo "No changes"
 else
   git commit -m "Update badges" || echo "No changes"
 fi
