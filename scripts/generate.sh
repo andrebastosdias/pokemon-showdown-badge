@@ -28,6 +28,9 @@ RAW_MSG=$(curl -s "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/commi
 MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
 REL_TIME=$(curl -s "https://img.shields.io/date/${UNIX_TS}.json" | jq -r '.value')
 COMBINED_ESC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "${REL_TIME} | ${MSG}")
+LAST_SHA=$(curl -s \
+  "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/commits?author=${USER}&per_page=1" \
+  | jq -r '.[0].sha')
 
 mkdir -p docs
 
@@ -42,6 +45,22 @@ curl -s "https://img.shields.io/static/v1?label=open%20pull%20requests&message=$
 
 curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${COMBINED_ESC}&color=${COL4}&style=flat" \
   > docs/last-commit.svg
+
+cat > docs/latest-commit.html <<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Latest commit for ${USER}</title>
+  <meta http-equiv="refresh" content="0;url=https://github.com/${REPO}/commit/${LAST_SHA}">
+  <!-- If meta-refresh is blocked, show a normal link -->
+  <link rel="canonical" href="https://github.com/${REPO}/commit/${LAST_SHA}">
+</head>
+<body>
+  <p>Redirecting to the latest commit… <a href="https://github.com/${REPO}/commit/${LAST_SHA}">click here</a>.</p>
+</body>
+</html>
+EOF
 
 touch docs/.nojekyll
 
