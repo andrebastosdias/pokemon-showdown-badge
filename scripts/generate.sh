@@ -1,51 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Functions
+log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"; }
+
+fetch_github_data() {
+  local url=$1
+  curl -s "${GITHUB_API_URL:-https://api.github.com}${url}"
+}
+
+create_badge() {
+  local label=$1 message=$2 color=$3 file=$4
+  if [[ -z "$message" ]]; then
+    log "  • Skipping ${file}.svg (no valid data)"
+    return 0
+  fi
+  curl -s "https://img.shields.io/static/v1?label=${label}&message=${message}&color=${color}&style=flat" > "docs/${file}.svg"
+  log "  • ${file}.svg created"
+}
+
 # Parse colors
 IFS=',' read -r COL1 COL2 COL3 COL4 <<< "${COLORS}"
 
-# Fetch contributors
-DATA=$(curl -s "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/stats/contributors")
-TOTAL=$(echo "$DATA" | jq length)
-INDEX=$(echo "$DATA" | jq -r '.[].author.login' | grep -n "^${USER}$" | cut -d: -f1 || true)
-if [[ -z "$INDEX" ]]; then
-  COMMITS=0
-  RANK="N/A"
-else
-  INDEX=$((INDEX-1))
+# Fetch contributor stats
+log "Fetching contributor stats for ${REPO}..."
+CONTRIBUTOR_DATA=$(fetch_github_data "/repos/${REPO}/stats/contributors")
+if [[ -n "$CONTRIBUTOR_DATA" ]]; then
+  TOTAL=$(jq length <<< "$CONTRIBUTOR_DATA")
+  INDEX=$(jq -r '.[].author.login' <<< "$CONTRIBUTOR_DATA" | grep -n "^${USER}$" | cut -d: -f1 || true)
+  COMMITS=$(jq ".[$INDEX].total" <<< "$CONTRIBUTOR_DATA")
+
+  INDEX=$((INDEX - 1))
   RANK=$((TOTAL - INDEX))
-  COMMITS=$(echo "$DATA" | jq ".[$INDEX].total")
 fi
 
-OPEN_PRS=$(curl -s "${GITHUB_API_URL:-https://api.github.com}/search/issues?q=repo:${REPO}+is:pr+is:open+draft:false+author:${USER}" \
-  | jq '.total_count')
+# Fetch open PR count
+log "Fetching open pull requests for ${USER}..."
+PRS_DATA=$(fetch_github_data "/search/issues?q=repo:${REPO}+is:pr+is:open+draft:false+author:${USER}")
+if [[ -n "$PRS_DATA" ]]; then
+  OPEN_PRS=$(jq '.total_count' <<< "$PRS_DATA")
+fi
 
-TIMESTAMP=$(curl -s "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/commits?author=${USER}&per_page=1" \
-  | jq -r '.[0].commit.committer.date' )
-UNIX_TS=$(date -d "$TIMESTAMP" +%s)
-RAW_MSG=$(curl -s "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/commits?author=${USER}&per_page=1" \
-  | jq -r '.[0].commit.message' | head -n1 | sed 's/"/\\"/g')
-MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
-REL_TIME=$(curl -s "https://img.shields.io/date/${UNIX_TS}.json" | jq -r '.value')
-COMBINED_ESC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "${REL_TIME} | ${MSG}")
-LAST_SHA=$(curl -s \
-  "${GITHUB_API_URL:-https://api.github.com}/repos/${REPO}/commits?author=${USER}&per_page=1" \
-  | jq -r '.[0].sha')
+# Fetch latest commit info
+log "Fetching latest commit for ${USER}..."
+COMMITS_DATA=$(fetch_github_data "/repos/${REPO}/commits?author=${USER}&per_page=1")
+if [[ -n "$COMMITS_DATA" ]]; then
+  LAST_COMMIT=$(echo "$COMMITS_DATA" | jq '.[0]')
+  TIMESTAMP=$(jq -r '.commit.committer.date' <<< "$LAST_COMMIT")
+  RAW_MSG=$(jq -r '.commit.message'  <<< "$LAST_COMMIT" | head -n1 | sed 's/"/\\"/g')
+  LAST_SHA=$(jq -r '.sha' <<< "$LAST_COMMIT")
 
+  UNIX_TS=$(date -d "$TIMESTAMP" +%s)
+  REL_TIME=$(curl -s "https://img.shields.io/date/${UNIX_TS}.json" | jq -r '.value')
+  MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
+  COMBINED_ESC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "${REL_TIME} | ${MSG}")
+fi
+
+# Prepare badges
+log "Generating badges..."
 mkdir -p docs
 
-curl -s "https://img.shields.io/static/v1?label=contributor&message=%23${RANK}&color=${COL1}&style=flat" \
-  > docs/contributor.svg
+create_badge "contributor" "%23${RANK}" "$COL1" "contributor"
+create_badge "commits" "${COMMITS}" "$COL2" "commits"
+create_badge "open pull requests" "${OPEN_PRS}" "$COL3" "open-pull-requests"
+create_badge "last commit" "${COMBINED_ESC}" "$COL4" "last-commit"
 
-curl -s "https://img.shields.io/static/v1?label=commits&message=${COMMITS}&color=${COL2}&style=flat" \
-  > docs/commits.svg
-
-curl -s "https://img.shields.io/static/v1?label=open%20pull%20requests&message=${OPEN_PRS}&color=${COL3}&style=flat" \
-  > docs/open-pull-requests.svg
-
-curl -s "https://img.shields.io/static/v1?label=last%20commit&message=${COMBINED_ESC}&color=${COL4}&style=flat" \
-  > docs/last-commit.svg
-
+# Create latest commit redirect
 cat > docs/latest-commit.html <<EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -53,7 +73,6 @@ cat > docs/latest-commit.html <<EOF
   <meta charset="utf-8">
   <title>Latest commit for ${USER}</title>
   <meta http-equiv="refresh" content="0;url=https://github.com/${REPO}/commit/${LAST_SHA}">
-  <!-- If meta-refresh is blocked, show a normal link -->
   <link rel="canonical" href="https://github.com/${REPO}/commit/${LAST_SHA}">
 </head>
 <body>
@@ -64,15 +83,14 @@ EOF
 
 touch docs/.nojekyll
 
+# Git config and push
+log "Committing and pushing changes..."
 git config --global user.email "actions@github.com"
 git config --global user.name "GitHub Action"
-
 git add docs/
 
-if [[ "${GITHUB_EVENT_NAME}" == "schedule" ]]; then
-  git commit -m "Update badges ($(date +'%Y-%m-%d %H:00'))" || echo "No changes"
-else
-  git commit -m "Update badges" || echo "No changes"
-fi
+COMMIT_MSG="Update badges"
+[[ "${GITHUB_EVENT_NAME:-}" == "schedule" ]] && COMMIT_MSG+=" ($(date +'%Y-%m-%d %H:00'))"
 
+git commit -m "${COMMIT_MSG}" || log "No changes to commit"
 git push

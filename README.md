@@ -21,7 +21,7 @@ jobs:
   badges:
     runs-on: ubuntu-latest
     steps:
-      - uses: yourname/generate-contribution-badges@v1
+      - uses: andrebastosdias/generate-contribution-badges@v1
         with:
           user: 'andrebastosdias'
           repository: 'smogon/pokemon-showdown'
