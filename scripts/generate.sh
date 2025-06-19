@@ -62,8 +62,8 @@ mkdir -p docs
 
 create_badge "contributor" "%23${RANK}" "$COL1" "contributor"
 create_badge "commits" "${COMMITS}" "$COL2" "commits"
-create_badge "open pull requests" "${OPEN_PRS}" "$COL3" "open-pull-requests"
-create_badge "last commit" "${COMBINED_ESC}" "$COL4" "last-commit"
+create_badge "open%20pull%20requests" "${OPEN_PRS}" "$COL3" "open-pull-requests"
+create_badge "last%20commit" "${COMBINED_ESC}" "$COL4" "last-commit"
 
 # Create latest commit redirect
 cat > docs/latest-commit.html <<EOF
