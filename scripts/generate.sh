@@ -28,9 +28,8 @@ CONTRIBUTOR_DATA=$(fetch_github_data "/repos/${REPO}/stats/contributors")
 if [[ -n "$CONTRIBUTOR_DATA" ]]; then
   TOTAL=$(jq length <<< "$CONTRIBUTOR_DATA")
   INDEX=$(jq -r '.[].author.login' <<< "$CONTRIBUTOR_DATA" | grep -n "^${USER}$" | cut -d: -f1 || true)
-  COMMITS=$(jq ".[$INDEX].total" <<< "$CONTRIBUTOR_DATA")
-
   INDEX=$((INDEX - 1))
+  COMMITS=$(jq ".[$INDEX].total" <<< "$CONTRIBUTOR_DATA")
   RANK=$((TOTAL - INDEX))
 fi
 
