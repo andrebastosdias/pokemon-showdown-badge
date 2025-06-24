@@ -88,8 +88,8 @@ git config --global user.email "actions@github.com"
 git config --global user.name "GitHub Action"
 git add docs/
 
-COMMIT_MSG="Update badges"
-[[ "${GITHUB_EVENT_NAME:-}" == "schedule" ]] && COMMIT_MSG+=" ($(date +'%Y-%m-%d %H:00'))"
+COMMIT_MESSAGE="Update badges"
+[[ "${GITHUB_EVENT_NAME:-}" == "schedule" ]] && COMMIT_MESSAGE+=" ($(date +'%Y-%m-%d %H:00'))"
 
-git commit -m "${COMMIT_MSG}" || log "No changes to commit"
+git commit -m "${COMMIT_MESSAGE}" || log "No changes to commit"
 git push
