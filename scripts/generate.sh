@@ -51,7 +51,7 @@ if [[ -n "$COMMITS_DATA" ]]; then
 
   UNIX_TS=$(date -d "$TIMESTAMP" +%s)
   REL_TIME=$(curl -s "https://img.shields.io/date/${UNIX_TS}.json" | jq -r '.value')
-  MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | xargs)
+  MSG=$(echo "$RAW_MSG" | sed 's/([^)]*)//g' | tr -d '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   COMBINED_ESC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "${REL_TIME} | ${MSG}")
 fi
 
