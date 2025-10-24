@@ -8,10 +8,6 @@ on:
     - cron: '0 * * * *' # Runs every hour
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   badges:
     runs-on: ubuntu-latest
