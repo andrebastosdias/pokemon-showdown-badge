@@ -81,20 +81,3 @@ cat > docs/latest-commit.html <<EOF
 EOF
 
 touch docs/.nojekyll
-
-# Git config and push
-log "Committing and pushing changes..."
-git config --global user.email "actions@github.com"
-git config --global user.name "GitHub Action"
-git add docs/
-
-if git diff --cached --quiet; then
-  log "No changes to commit"
-  exit 0
-fi
-
-COMMIT_MESSAGE="Update badges"
-[[ "${GITHUB_EVENT_NAME:-}" == "schedule" ]] && COMMIT_MESSAGE+=" ($(date +'%Y-%m-%d %H:00'))"
-
-git commit -m "${COMMIT_MESSAGE}"
-git push
