@@ -1,9 +1,6 @@
 name: 'Generate Contribution Badges'
 description: 'Fetch commit count, PR count, last commit, and generate customizable shields badges.'
 author: 'André Bastos Dias'
-branding:
-  icon: 'trophy'
-  color: 'blue'
 inputs:
   user:
     description: 'GitHub username to generate badges for'
@@ -38,7 +35,7 @@ runs:
         git add docs/
 
         if git diff --cached --quiet; then
-          log "No changes to commit"
+          echo "No changes to commit"
           exit 0
         fi
 
