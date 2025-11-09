@@ -12,7 +12,7 @@ inputs:
   colors:
     description: 'Comma-separated colors for badges: contributor,commits,open_prs,last_commit'
     required: false
-    default: 'F34134,8334B7,00A398,004878'
+    default: 'blue,green,orange,red'
 runs:
   using: 'composite'
   steps:

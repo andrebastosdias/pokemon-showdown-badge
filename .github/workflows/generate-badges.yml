@@ -26,3 +26,4 @@ jobs:
         with:
           user: ${{ env.USER }}
           repository: ${{ env.REPO }}
+          colors: 'F34134,8334B7,00A398,004878'
