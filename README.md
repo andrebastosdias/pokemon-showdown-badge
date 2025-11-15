@@ -1,5 +1,7 @@
 # Generate Contribution Badges
 
+[![generate-contribution-badges](https://github.com/andrebastosdias/pokemon-showdown-badge/actions/workflows/generate-badges.yml/badge.svg)](https://github.com/andrebastosdias/pokemon-showdown-badge/actions/workflows/generate-badges.yml)
+
 Generates contributor, commits, open PRs, and last commit badges for a given user + repo.
 
 ## Inputs
